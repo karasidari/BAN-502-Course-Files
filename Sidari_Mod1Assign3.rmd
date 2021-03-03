@@ -1,0 +1,66 @@
+---
+output:
+  word_document: default
+  html_document: default
+editor_options:
+  chunk_output_type: console
+---
+```{r Task 1}
+#install.packages(tidyverse)
+library(tidyverse)
+```
+```{r Task 2}
+diamonddata=diamonds
+diamonddata
+```
+
+```{r Task 3}
+ggplot(diamonddata, aes(x=carat, y=price))+
+  geom_point()
+```
+
+The general correlation between carat and price is, as the carat increases, so does the price. Though we do see some diamonds are at a higher price, while being a smaller carat size. 
+
+
+```{r Task 4}
+ggplot(diamonddata, aes(x=carat, y=price, color=cut))+
+  geom_point()
+```
+
+As seen above, the correlation between carat and price remains the same; as the carat increases, so does the price. However, we can now see that some of the carats that were smaller, but more expensive, might be because of the cut quality. Though you can still get an ideal cut diamond on the lower end of the price spectrum. 
+
+
+```{r Task 5}
+ggplot(diamonddata, aes(x=carat, y=price, color=cut))+
+  geom_point()+
+  facet_wrap(~color)
+```
+
+When comparing all four components; carat, price, cut, and color, cut stays relatively the same no matter the other variables. When it comes to color, stick to lower size carats if you want the best color quality. You can get the best color and best cut no matter your price point, but the carat size will very. 
+
+
+```{r Task 6}
+InventoryData <- read_csv("InventoryData.csv")
+
+```
+
+```{r Task 7}
+inventoryA<-InventoryData%>%
+  filter(Supplier=="A")
+```
+
+There are 3695 rows.
+
+```{r Task 8}
+inventoryA= mutate(inventoryA, OnHandRatio=`On Hand` / `Annual Demand`)
+```
+
+The code listed above creates a new data set. Within that data set, there is a new column depicting the ratio between the diamonds on hand, and the actual demand for that diamond.
+
+```{r Task 9}
+avg_cost= inventoryA%>%
+  group_by(`Item SKU`)%>%
+  summarise(SKUAvgCost=mean(`Cost per Unit ($)`))
+```
+
+The concepts that are the most challenging for me have to deal with dplyr. Specifically group_by and summarize. Mostly just because we did not use them often in previous courses, so the concept of what the function does is still confusing. Which if you don't understand what it does, you won't know how to use it properly. 

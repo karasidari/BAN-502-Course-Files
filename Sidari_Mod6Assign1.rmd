@@ -1,0 +1,98 @@
+---
+output:
+  word_document: default
+  html_document: default
+editor_options:
+  chunk_output_type: console
+---
+```{r, include = FALSE}
+library(tidyverse)
+library(tidymodels)
+library(cluster) 
+library(factoextra)
+
+```
+
+```{r}
+trucks = read_csv("trucks.csv")
+```
+
+```{r Task 1}
+ggplot(trucks, aes(x=Distance, y=Speeding)) +
+  geom_point(alpha = 0.4) + theme_bw()
+```
+
+Shorter distances tend to result in less speeding. While the farther distance a driver goes, speeding increases.
+
+```{r Task 2}
+
+kmeans_recipe = recipe(~ Distance + Speeding, trucks) 
+
+trucks_recipe= kmeans_recipe %>% 
+  step_scale(all_numeric()) %>%
+  step_center(all_numeric()) 
+
+trucks_recipe = prep(trucks_recipe, trucks) 
+
+trucks_cleaned = bake(trucks_recipe, trucks)
+```
+
+```{r Task 3}
+set.seed(64)
+clusters = kmeans(trucks_cleaned, 2)
+trucks = augment(clusters, trucks)
+ggplot(trucks, aes(x=Distance,y= Speeding,color=factor(.cluster))) + geom_point() 
+```
+
+There are only two clusters. Just like the previous graph, we see that the farther one travels, the more likely they are to speed. Though, there does appear to be an almost 3rd cluster forming, where those that travel farther are driving faster than the majority of others. 
+
+
+```{r Task 4}
+set.seed(412)
+clusts = 
+  tibble(k =1:8) %>% 
+  mutate(
+    kclust = map(k, ~kmeans(trucks_cleaned, .x)),
+    tidied = map(kclust, tidy),
+    glanced = map(kclust, glance),
+    augmented = map(kclust, augment, trucks_cleaned)
+  )
+
+clusters = 
+  clusts %>%
+  unnest(cols = c(tidied))
+
+assignments = 
+  clusts %>% 
+  unnest(cols = c(augmented))
+
+clusterings = 
+  clusts %>%
+  unnest(cols = c(glanced))
+
+ggplot(assignments, aes(x = Distance, y = Speeding)) +
+  geom_point(aes(color = .cluster), alpha = 0.8) + 
+  facet_wrap(~ k)
+```
+
+The value of k that appears to be the most appropriate is either 3 or 4.
+
+```{r Task 5}
+ggplot(clusterings, aes(k, tot.withinss)) +
+  geom_line() +
+  geom_point() + theme_bw()
+```
+
+The best value of K is 4. 
+
+```{r Task 6}
+
+set.seed(64)
+clusters = kmeans(trucks_cleaned, 4)
+trucks = augment(clusters, trucks)
+ggplot(trucks, aes(x=Distance,y= Speeding,color=factor(.cluster))) + geom_point() 
+
+
+```
+
+There are 4 cluster groups. We can come to the conclusion that no matter the distance, some people will drive faster. However, distance does not determine the speed. As there are people who drive around the same speed at a wide range of distances. 

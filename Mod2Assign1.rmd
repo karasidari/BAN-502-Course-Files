@@ -1,0 +1,104 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+```{r}
+library("tidymodels")
+library("tidyverse")
+library(ggcorrplot)
+library(gridExtra)
+
+
+
+```
+
+```{r}
+
+library("GGally")
+```
+
+```{r}
+
+library("lmtest")
+```
+
+```{r}
+air=airquality
+```
+
+How many variables? 6 
+Observations? 153
+Yes there are missing data
+```{r Task 2}
+air2=drop_na(air,"Ozone", "Solar.R")
+```
+There are now 111 rows
+
+```{r}
+summary(bike)
+```
+
+
+```{r}
+glimpse(bike)
+```
+
+
+```{r}
+```
+
+
+```{r Task 3}
+ggpairs(air2)
+ggcorr(air2, label=TRUE)
+```
+Temp is strongly correlated with Ozone, Day is not
+
+```{r Task 4}
+ggplot(air2, aes(x = Temp, y= Ozone))+
+  geom_point()
+```
+
+It's somewhat a positive trend, as temp increases so does the ozone.
+
+```{r Task 5}
+mod1 = recipe(Ozone ~ Temp, air2)
+mod1
+
+lm_model =
+  linear_reg() %>% 
+  set_engine("lm")
+
+lm_wflow = 
+  workflow() %>% 
+  add_model(lm_model) %>% 
+  add_recipe(mod1)
+
+lm_fit = fit(lm_wflow, air2)
+
+confint(lm_fit$fit$fit$fit)
+```
+
+```{r Task 6}
+ggplot(air2, aes(x = Temp, y= Ozone))+
+  geom_point()+
+  geom_smooth(method="lm", se=FALSE)
+```
+
+```{r Task 7}
+summary(lm_fit$fit$fit$fit)
+
+prediction_80= data.frame(Temp= c(80))
+predict(lm_fit, new_data=prediction_80)
+
+-147.6461+2.4391*80
+```
+
+
+
+```{r}
+test=lm(Ozone~Temp, air2)
+summary(test)
+```
+

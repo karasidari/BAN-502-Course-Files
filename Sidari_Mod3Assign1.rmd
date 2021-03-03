@@ -1,0 +1,80 @@
+---
+output:
+  word_document: default
+  html_document: default
+editor_options:
+  chunk_output_type: console
+---
+```{r include=FALSE}
+library(tidyverse) 
+library(tidymodels)
+library(glmnet)  
+library(GGally) 
+library(ggcorrplot) 
+library(MASS) 
+library(leaps) 
+library(lmtest) 
+library(splines) 
+library(car)
+library(lubridate)
+```
+
+```{r}
+bike_cleaned <- read_csv("bike_cleaned.csv")
+
+bike= bike_cleaned%>%
+  mutate(dteday=mdy(dteday))%>%
+  mutate_if(is.character, factor)%>%
+  mutate(hr=as_factor(hr))
+
+```
+
+
+```{r}
+set.seed(1234)
+bike_split = initial_split(bike, prob = 0.70, strata = count)
+train = training(bike_split)
+test = testing(bike_split)
+```
+
+There are 4,343 rows in the test set, and 13,036 rows in the train set.
+
+```{r}
+bike_recipe = recipe(count ~ season + mnth + hr + holiday + weekday + temp + weathersit, train)%>%
+  step_dummy(all_nominal()) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors())
+  
+lm_model =  
+  linear_reg() %>% 
+  set_engine("lm")
+
+lm_wflow = 
+  workflow() %>% 
+  add_model(lm_model) %>% 
+  add_recipe(bike_recipe)
+
+lm_fit = fit(lm_wflow, train)
+```
+
+```{r}
+summary(lm_fit$fit$fit$fit)
+```
+
+The adjust R-squared is 0.6229.
+
+```{r}
+predict_train=predict(lm_fit, new_data = train)
+
+ggplot(predict_train, aes(x=.pred))+
+  geom_histogram()+
+  theme_bw()
+```
+
+As the prediction increases the count increases. However, once it reaches a peak, we see it take a dip, and then increase again. After around a prediction of 300, count decreases and continues to thereafter. 
+
+```{r}
+lm_fit %>% predict(test) %>% bind_cols(test) %>% metrics(truth = count, estimate = .pred)
+```
+
+The R-squared for test is the same as the R-squared for training, depending on if you round. This suggests that our model is not overfitting.  
